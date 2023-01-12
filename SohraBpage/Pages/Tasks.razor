@@ -1,0 +1,527 @@
+﻿@page "/tasks"
+@inject HttpClient Http
+@using System.Diagnostics
+@inject NavigationManager navigationManager
+@inject IJSRuntime JSRuntime
+
+
+@if (asoStart == true)
+{
+    <div style="display:flex;justify-content:center; align-content:center; height: 100px;  ">
+        <button class="btn btn-primary" @onclick="asoStartFirst">Start</button>
+
+    </div>
+    <div style="display:flex;justify-content:center; align-content:center; height: 300px;  ">
+        @*
+        <h1 style="align-content:center;">در این تحقیق هر بار یک چهره ظاهر می شود که ممکن است هیجانی یا خنثی باشد که شما با آن کاری ندارید ولی در زیر آن چشمی را که سریعتر چشمک می زند بعد از تشخیص سریع انتخاب کنید</h1>
+        *@
+        <h1 style="align-content:center;">Here you see a face and blinking eyes underneath, choose the eye that blinks quicker as soon as you find out</h1>
+    </div>
+}
+
+
+@if (samanFixShow == true)
+{
+    <div style="display:flex;justify-content:center; align-content:center; height: 150px; ">
+        <h1 style="align-content:center;">@asoFix</h1>
+    </div>
+    <div style="display:flex;justify-content:center; align-content:center; height: 250px; ">
+        <img x="-5" y="-5" width="100" height="100" src="@fixImage" />
+    </div>
+}
+@if (samanStim2Show == true)
+{
+
+    <div style="display:flex;justify-content:center; align-content:center; height: 50px; ">
+    </div>
+    <div style="display:flex;justify-content:center; align-content:center; height: 250px;border:hidden; ">
+        <img x="-5" y="-5" width="250" height="250" src="@downImage0" />
+    </div>
+    <div style="display:flex;justify-content:center; align-content:center; height: 100px;border:hidden;">
+        <div style="display:flex;justify-content:center; align-content:center;width:125px; height: 100px;border:hidden; " @onclick="@(async() => await samanStim2Hit("0"))">
+            <img x="-5" y="-5" width="125" height="100" src="@targetImageLeft" />
+        </div>
+        <div style="display:flex;justify-content:center; align-content:center;width:0px; height: 100px;border:hidden; ">
+        </div>
+        <div style="display:flex;justify-content:center; align-content:center;width:125px; height: 100px;border:hidden; " @onclick="@(async() => await samanStim2Hit("1"))">
+            <img x="-5" y="-5" width="125" height="100" src="@targetImageRight" />
+        </div>
+
+    </div>
+
+    <div style="display:flex;justify-content:center; align-content:center; height: 100px;">
+        <div style="display:flex;justify-content:center; align-content:center;width:100px; height: 100px;border:hidden; " @onclick="@(async() => await samanStim2Hit("0"))">
+            <img x="-5" y="-5" width="100" height="100" src="@ArrowLeft" />
+        </div>
+        <div style="display:flex;justify-content:center; align-content:center;width:50px; height: 100px;border:hidden; ">
+        </div>
+        <div style="display:flex;justify-content:center; align-content:center;width:100px; height: 100px;border:hidden; " @onclick="@(async() => await samanStim2Hit("1"))">
+            <img x="-5" y="-5" width="100" height="100" src="@ArrowRight" />
+        </div>
+    </div>
+}
+@if (asoFeedbackShow == true)
+{
+    <div style="display:flex;justify-content:center; align-content:center; height: 100px; ">
+    </div>
+    <div style="display:flex;justify-content:center; align-content:center; height: 300px;">
+        @if (result == 1)
+        {
+            <img x="-5" y="-5" width="75" height="75" src="@LikeImageLeft" />
+            <img x="-5" y="-5" width="75" height="75" src="@LikeImageRight" />
+
+        }
+        @if (result == 0)
+        {
+            <img x="-5" y="-5" width="75" height="75" src="@UnlikeImageLeft" />
+            <img x="-5" y="-5" width="75" height="75" src="@UnlikeImageRight" />
+        }
+        @if (result == 2)
+        {
+            <img x="-5" y="-5" width="75" height="75" src="@UnlikeImageLeft" />
+            <img x="-5" y="-5" width="75" height="75" src="@UnlikeImageLeft" />
+            <img x="-5" y="-5" width="75" height="75" src="@UnlikeImageLeft" />
+            <img x="-5" y="-5" width="75" height="75" src="@UnlikeImageRight" />
+            <img x="-5" y="-5" width="75" height="75" src="@UnlikeImageRight" />
+            <img x="-5" y="-5" width="75" height="75" src="@UnlikeImageRight" />
+        }
+    </div>
+}
+
+
+
+@code
+{
+    int leftScreen = 50;
+    int topScreen = 50;
+    string asoFix;
+    public bool asoStart { get; set; }
+
+    public bool asoScaleShow { get; set; }
+    public bool asoFeedbackShow { get; set; }
+
+    public bool samanFixShow { get; set; }
+    public bool samanStim2Show { get; set; }
+
+    public int asoCBMsession { get; set; }
+
+    public int asoLocation { get; set; }
+
+    public string value1 = "";
+
+    //public int placeImage = -1;
+
+    bool createUserDialogOpen = false;
+
+    public string downImage0 = "Yes";//"_content/BlazorBoilerplate.CommonUI/images/RockPapS/rock.jpg";
+    public string downImage1 = "No";//"_content/BlazorBoilerplate.CommonUI/images/RockPapS/scissors.jpg";
+
+    public string downImage0B { get; set; }
+
+    //public string leftImage { get; set; }
+    //public string rightImage { get; set; }
+    public string fixImage { get; set; }
+
+
+    public string targetImageLeft { get; set; }
+    public string targetImageRight { get; set; }
+
+    public string leftImage0 { get; set; }
+
+    public string leftImage1 { get; set; }
+    public string rightImage0 { get; set; }
+    public string rightImage1 { get; set; }
+
+    public string LikeImageRight { get; set; }
+    public string UnlikeImageRight { get; set; }
+    public string LikeImageLeft { get; set; }
+    public string UnlikeImageLeft { get; set; }
+
+    public string targetImageLeft1 { get; set; }
+    public string targetImageRight1 { get; set; }
+
+
+    public string ArrowLeft { get; set; }
+    public string ArrowRight { get; set; }
+
+    //public MessageDto messageDto { get; set; } = new MessageDto();
+
+    string AsoRT = "0";
+    double AsoRTcounter = 0.0;
+    public int result;
+    public int numLR;
+
+    public bool delayDo { get; set; }
+
+    public int resultHertz;
+
+    Random randomLR = new Random(DateTime.Now.Millisecond);
+
+    Random randomLR2 = new Random(DateTime.Now.Millisecond);
+
+    Random randomLR3 = new Random(DateTime.Now.Millisecond);
+
+    int asoLoop = 0;
+
+    bool Val1 = false;
+
+    public double ms2 = 0;
+    public double ms50 = 0;
+    public double ms67 = 0;
+
+    public string asoTmp = "aso";
+
+    Stopwatch stopwatch = new Stopwatch();
+
+    Stopwatch stopwatch50 = new Stopwatch();
+
+    double asoLag50 = 0;
+    double asoLag67 = 0;
+    int asoLooLoo = 0;
+    int numRatio;
+
+    protected override void OnInitialized()
+    {
+        downImage0B = "";
+        asoFix = "Please Wait...";
+        // messageDto.Text = "";
+
+        value1 = "Asoman2";
+
+        asoScaleShow = false;
+
+        samanFixShow = false;
+        samanStim2Show = false;
+
+        asoFeedbackShow = false;
+
+        asoCBMsession = 0;
+        asoStart = true;
+
+    }
+}
+
+@code
+{
+    //List<Todo> todos = new List<Todo>();
+    //public Todo todo { get; set; } = new Todo();
+
+    // List<DbLogo> dbLogoItems;
+    //string[] DebugLevels1 = { string.Empty, "Debug", "Information", "Warning", "Error" };
+    //string DebugLevel1 = string.Empty;
+
+    //private int totalItemsCount1 { get; set; } = 10;
+    //public DbLogo dbLogoItem { get; set; } = new DbLogo();
+
+    //List<DbLog> dbLogItems;
+    //string[] DebugLevels = { string.Empty, "Debug", "Information", "Warning", "Error" };
+    //string DebugLevel = string.Empty;
+
+    //private int totalItemsCount { get; set; } = 10;
+    //public DbLog dbLogItem { get; set; } = new DbLog();
+
+    public string asoUser = "aso";
+
+    async Task asoStartFirst()
+    {
+        asoStart = false;
+        samanFixShow = true;
+
+
+        await InvokeAsync(StateHasChanged);
+
+        //  foreach (var message in Messages)
+        //  {
+        //      //cogsci*img1*0*_content/BlazorBoilerplate.Theme.Material/images/52446ed4-3cad-40f5-9daf-7019f65ba35e/0.jpg*data
+        //      string asoTmpUser = message.Text.Split("*")[0];
+        //      string asoTmpTask = message.Text.Split("*")[1];
+        //     string asoTmpNo = message.Text.Split("*")[2];
+        //     string asoTmpImg = message.Text.Split("*")[3];
+
+        //     if (asoUser == asoTmpUser && asoTmpTask == value1)
+        //     {
+        //         asoCBMsession=Convert.ToInt32(asoTmpNo)+1;
+        //         await InvokeAsync(StateHasChanged);
+        //      }
+        //  }
+        await Task.Delay(1000);
+
+        // if (asoTmpImg.Split("/")[4] == "BlackCircle.jpg")
+        // asoLooLoo = 0;
+
+        //if (asoTmpImg.Split("/")[4] == "LeftUnlike.jpg")
+
+
+        //asoLooLoo++;
+
+        // if (asoTmpImg.Split("/")[4] == "FixHand.jpg")
+
+        fixImage = "images/416/IFixHand.jpg"; // dbLogItems[asoLooLoo].Message1;
+
+        //if (asoTmpImg.Split("/")[4] == "RightLike.jpg")
+
+        LikeImageRight = "images/416/JLeftLike.jpg"; //dbLogItems[asoLooLoo].Message2;
+
+        //if (asoTmpImg.Split("/")[4] == "RightUnlike.jpg")
+
+        UnlikeImageRight = "images/416/MRightUnLike.jpg"; // dbLogItems[asoLooLoo].Message3;
+
+        // if (asoTmpImg.Split("/")[4] == "LeftLike.jpg")
+
+        LikeImageLeft = "images/416/LRightLike.jpg"; //dbLogItems[asoLooLoo].Message4;
+
+        UnlikeImageLeft = "images/416/KLeftUnLike.jpg"; // dbLogItems[asoLooLoo].Message3;
+
+        //asoLooLoo++;
+
+        // if (asoTmpImg.Split("/")[4] == "Left1.jpg")
+
+        leftImage1 = "images/416/ELeft1.jpg"; //dbLogItems[asoLooLoo].Message1;
+
+        //if (asoTmpImg.Split("/")[4] == "Right1.jpg")
+
+        rightImage1 = "images/416/FRight1.jpg"; //dbLogItems[asoLooLoo].Message2; ;
+
+        //if (asoTmpImg.Split("/")[4] == "Right2Left.jpg")
+
+        ArrowLeft = "images/416/GRight2Left.jpg"; //dbLogItems[asoLooLoo].Message3;
+
+        // if (asoTmpImg.Split("/")[4] == "Left2Right.jpg")
+
+        ArrowRight = "images/416/HLeft2Right.jpg"; //dbLogItems[asoLooLoo].Message4;
+
+        //asoLooLoo++;
+
+        targetImageLeft1 = "images/416/GRight2Left.jpg"; //dbLogItems[asoLooLoo].Message1;
+                                                         // if (asoTmpImg.Split("/")[4] == "WhiteCircle.jpg")
+
+        targetImageRight1 = "images/416/HLeft2Right.jpg"; //dbLogItems[asoLooLoo].Message2; ;
+                                                          //downIm
+                                                          //if (asoTmpImg.Split("/")[4] == "Left0.jpg")
+
+        leftImage0 = "images/416/CLeft0.jpg"; //dbLogItems[asoLooLoo].Message3;
+                                              //downImage1B = asoTmp1;
+
+        // if (asoTmpImg.Split("/")[4] == "Right0.jpg")
+
+        rightImage0 = "images/416/DRight0.jpg"; //dbLogItems[asoLooLoo].Message4;
+                                                //asoLoop = 0; //asoLooLoo+1;
+        await Task.Delay(500);
+        asoFix = "";
+        await PlayAgain();
+    }
+
+    async Task PlayAgain()
+    {
+        samanFixShow = true;
+        await InvokeAsync(StateHasChanged);
+        int numm = randomLR3.Next(1, 100);
+        await InvokeAsync(StateHasChanged);
+
+        asoLocation = 1;
+
+        if (numm <= 25)
+        {
+            asoLocation = 0;
+        }
+
+        if (asoLocation == 0)
+        {
+            //angry
+            downImage0 = "images/416/" + asoLoop.ToString() + ".jpg"; // dbLogItems[asoLoop].Message4;//message.Message1;
+                                                                      //downImage0B = dbLogItems[asoLoop].Level;//.Split("*")[1];
+        }
+
+        else
+        {
+            //neutral
+            downImage0 = "images/416/" + (asoLoop + 1).ToString() + ".jpg"; //dbLogItems[asoLoop].Message3;//message.Message1;
+                                                                            //downImage0B = dbLogItems[asoLoop].Level;//.Split("*")[1];
+        }
+
+        // result = 0;
+        //AsoRT = "0";
+
+        int num = randomLR2.Next(1, 100);
+        await InvokeAsync(StateHasChanged);
+
+        if (num % 2 == 0)
+        {
+            numLR = 0;
+        }
+        else
+        {
+            numLR = 1;
+        }
+
+        await InvokeAsync(StateHasChanged);
+
+        await Task.Delay(1000);
+
+        delayDo = false;
+
+        AsoRTcounter = 0;
+        stopwatch.Reset();
+        stopwatch.Start();
+        samanFixShow = false;
+        samanStim2Show = true;
+        await asoDelay();
+
+        if (delayDo == false)
+        {
+            await samanStim2Hit("2");
+        }
+    }
+
+    async Task asoDelay()
+    {
+        await InvokeAsync(StateHasChanged);
+        do
+        {
+            numRatio = randomLR.Next(1, 100);
+            resultHertz = 0;
+            if (numRatio <= 30)
+            {
+                resultHertz = 1;
+            }
+            await InvokeAsync(StateHasChanged);
+
+            if (Math.Abs(resultHertz - numLR) == 0)
+            {
+                targetImageLeft = leftImage1;
+                targetImageRight = rightImage0;
+            }
+
+            if (Math.Abs(resultHertz - numLR) == 1)
+            {
+                targetImageLeft = leftImage0;
+                targetImageRight = rightImage1;
+            }
+
+            await InvokeAsync(StateHasChanged);
+            stopwatch50.Reset();
+            stopwatch50.Start();
+            do
+            {
+                ms2 = stopwatch.Elapsed.TotalMilliseconds;
+                ms50 = stopwatch50.Elapsed.TotalMilliseconds;
+                await Task.Delay(1);
+                await InvokeAsync(StateHasChanged);
+
+            } while (ms2 <= 1500 && ms50 <= 50 && delayDo == false);
+
+
+            targetImageLeft = leftImage0;
+            targetImageRight = rightImage0;
+            await InvokeAsync(StateHasChanged);
+            stopwatch50.Reset();
+            stopwatch50.Start();
+            do
+            {
+                ms50 = stopwatch50.Elapsed.TotalMilliseconds;
+                ms2 = stopwatch.Elapsed.TotalMilliseconds;
+
+                await Task.Delay(1);
+                await InvokeAsync(StateHasChanged);
+
+
+            } while (ms2 <= 1500 && ms50 <= 67 && delayDo == false);
+
+        } while (ms2 <= 1500 && delayDo == false);
+
+    }
+
+    public async Task samanStim2Hit(string asoKey)
+    {
+        samanStim2Show = false;
+
+        targetImageLeft = leftImage0;
+        targetImageRight = rightImage0;
+
+        delayDo = true;
+        await InvokeAsync(StateHasChanged);
+        stopwatch.Stop();
+        //asoTmp = asoKey;
+
+        AsoRT = Convert.ToInt32(ms2).ToString();
+
+        result = 2;
+
+        if (asoKey == numLR.ToString())
+        {
+            result = 1;
+        }
+
+        if ((asoKey == "1" && numLR == 0) || (asoKey == "0" && numLR == 1))
+        {
+            result = 0;
+        }
+        asoFeedbackShow = true;
+        await InvokeAsync(StateHasChanged);
+        await Task.Delay(1000);
+
+        asoFeedbackShow = false;
+        // samanFixShow = true;
+
+        //placeImage = -1;
+
+        // messageDto.Text = downImage0B + "_" + asoLoop.ToString() + "_" + result.ToString() + "_" + (AsoRT + "    ").Substring(0, 4).Trim() + "_" + numLR.ToString() + "_" + resultHertz.ToString() + "#" + messageDto.Text;
+
+        if (asoLoop < 99)
+        {
+
+            try
+            {
+                //todo.Title = "," + asoUser + "," + value1 + "," + (asoCBMsession + 1).ToString() + "," + DateTime.Now + "," + asoLoop.ToString() + "," + asoLooLoo.ToString() + "," + "downImage0B" + "," + asoLoop.ToString() + "," + result.ToString() + "," + AsoRT + "," + numLR.ToString() + "," + resultHertz.ToString() + ",";
+                //apiClient.AddEntity(todo);
+
+                //await apiClient.SaveChanges();
+
+                /// await LoadMainEntities();
+            }
+            catch (Exception ex)
+            {
+                //matToaster.Add(ex.GetBaseException().Message, MatToastType.Danger, "Operation Failed");
+            }
+            //todo = new Todo();
+
+            downImage0 = "";
+            downImage0B = "";
+
+            AsoRTcounter = 0;
+            asoLoop += 2;
+            await PlayAgain();
+            // asoNext = true;
+        }
+        else
+        {
+            asoStart = false;
+            try
+            {
+                // messageDto.Text = asoUser + "*" + value1 + "*" + (asoCBMsession + 1).ToString() + "*" + messageDto.Text;
+                //messageDto.When = DateTime.Now;
+                // await Send(messageDto);
+                // await InvokeAsync(StateHasChanged);
+            }
+
+            catch (Exception ex)
+
+            {
+                //matToaster.Add(ex.GetBaseException().Message, MatToastType.Danger, "Error");
+            }
+
+            createUserDialogOpen = true;
+
+            // asoNext = false;
+            navigationManager.NavigateTo("");
+            //return;
+        }
+
+
+    }
+
+
+
+}
+
+
